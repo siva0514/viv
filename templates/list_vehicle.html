@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle List</title>
+    <!-- Add your CSS styles here -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        .found-true {
+            background-color: #c2f0c2;
+        }
+
+        .found-false {
+            background-color: #f0c2c2;
+        }
+
+        .request-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #27ae60;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        }
+
+        .request-link:hover {
+            background-color: #219452;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vehicle List</h1>
+    <a class="request-link" href="/">Go to Request Form</a>
+    <table border="1">
+        <tr>
+            <th>Plate Found</th>
+            <th>Country</th>
+            <th>Unicode Text</th>
+            <th>separatedText</th>
+            <th>Category</th>
+            <th>MMR Make</th>
+            <th>MMR Model</th>
+        </tr>
+        {% for vehicle in vehicles %}
+        <tr>
+            <td>{{ vehicle.plate_found }}</td>
+            <td>{{ vehicle.country }}</td>
+            <td>{{ vehicle.unicode_text }}</td>
+            <td>{{ vehicle.separated_text }}</td>
+            <td>{{ vehicle.category }}</td>
+            <td>{{ vehicle.mmr_make }}</td>
+            <td>{{ vehicle.mmr_model }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if vehicles.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ vehicles.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ vehicles.number }} of {{ vehicles.paginator.num_pages }}.
+            </span>
+
+            {% if vehicles.has_next %}
+                <a href="?page={{ vehicles.next_page_number }}">next</a>
+                <a href="?page={{ vehicles.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</body>
+</html>
+

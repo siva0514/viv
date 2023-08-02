@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle API Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        form {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select, input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        a {
+            display: block;
+            margin-top: 10px;
+        }
+        .list-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #3498db;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        }
+
+        .list-link:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Send a Request to the Vehicle API</h1>
+    <a class="list-link" href="/api/vehicle_list/">List of Vehicle</a>
+    <a class="list-link" href="/">Send a Image Request to the Vehicle API</a>
+    <form id="vehicleForm" action="/api/process_video/" method="POST" enctype="multipart/form-data">
+        <label for="region">Region:</label>
+        <select name="region" id="region">
+            <option value="EUR">Europe (EUR)</option>
+            <option value="NA">North America (NA)</option>
+            <option value="ASIA">Asia (ASIA)</option>
+            <option value="AFR">Africa (AFR)</option>
+            <option value="OCE">Oceania (OCE)</option>
+            <option value="SA">South America (SA)</option>
+        </select>
+        <br>
+        {% csrf_token %}
+        <div style="display: flex; gap: 10px;">
+          <label for="anpr">ANPR</label>
+          <input type="checkbox" id="anpr" name="services" value="anpr" checked>
+
+          <label for="mmr">MMR</label>
+          <input type="checkbox" id="mmr" name="services" value="mmr" checked>
+
+          <label for="adr">ADR</label>
+          <input type="checkbox" id="adr" name="services" value="adr" checked>
+        </div>
+
+        <label for="location">Location:</label>
+        <select name="location" id="location">
+            <option value="HUN">Hungary (HUN)</option>
+            <option value="AUT">Austria (AUT)</option>
+            <option value="USA">United States (USA)</option>
+            <option value="CAN">Canada (CAN)</option>
+            <option value="AUS">Australia (AUS)</option>
+            <option value="BRA">Brazil (BRA)</option>
+        </select>
+        <br>
+        <label for="location">Maximum Number of reads</label>
+        <select name="reads" id="reads">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
+        <button type="button" name="webcam" id="useWebcamBtn">Use Webcam</button>
+        <input type="file" name="video" id="videoInput">
+        <button type="button" id="uploadVideoBtn">Upload Video</button>
+
+        <br>
+        <video id="videoPlayer" controls style="display: none;"></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <br>
+        <button type="button" id="startDetectionBtn" style="display: none;">Start Detection</button>
+        <button type="button" id="stopDetectionBtn" style="display: none;">Stop Detection</button>
+        <button type="button" id="takeScreenshotBtn" style="display: none;">Take Screenshot</button>
+        <br>
+        <input type="submit" value="Send Request" id="sendRequestBtn" style="display: none;">
+    </form>
+    <script>
+        // JavaScript code for handling region and location dropdowns
+        const regionDropdown = document.getElementById('region');
+        const locationDropdown = document.getElementById('location');
+
+        const regionLocations = {
+            'EUR': ['Hungary (HUN)', 'Austria (AUT)'],
+            'NA': ['Canada (AB)', 'Canada (BC)', 'United States of America (WV)', 'United States of America (WY)'],
+            'South Asia': ['Bhutan', 'India', 'Cambodia', 'Sri Lanka'],
+            'AFR': ['Algeria', 'Angola', 'Benin','Burundi'],
+        };
+
+        function updateLocationOptions() {
+            const selectedRegion = regionDropdown.value;
+            locationDropdown.innerHTML = '';
+
+            const locations = regionLocations[selectedRegion];
+
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationDropdown.appendChild(option);
+            });
+        }
+
+        regionDropdown.addEventListener('change', updateLocationOptions);
+        updateLocationOptions();
+
+    </script>
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const startDetectionBtn = document.getElementById('startDetectionBtn');
+        const playVideoBtn = document.getElementById('playVideoBtn');
+
+        // Function to start detection
+        startDetectionBtn.addEventListener('click', async () => {
+            if (!videoStream) {
+                try {
+                    // Access the webcam and get the video stream
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+                    // Set the video stream as the source of the video player
+                    videoPlayer.srcObject = videoStream;
+                } catch (error) {
+                    console.error('Error accessing webcam:', error);
+                    return;
+                }
+            }
+        });
+
+        const vehicleForm = document.getElementById('vehicleForm');
+        const useWebcamBtn = document.getElementById('useWebcamBtn');
+        const uploadVideoBtn = document.getElementById('uploadVideoBtn');
+
+        // Add click event listener to the "Use Webcam" button
+        useWebcamBtn.addEventListener('click', function () {
+            vehicleForm.action = "/api/webcam_video/";
+
+            // Submit the form
+            vehicleForm.submit();
+        });
+        uploadVideoBtn.addEventListener('click', function () {
+            vehicleForm.action = "/api/process_video/";
+
+            // Submit the form
+            vehicleForm.submit();
+        });
+    </script>
+</body>
+</html>
